@@ -129,6 +129,25 @@
     cursor: pointer;
   }
   .del:hover { background: var(--bg-muted); color: var(--fg); }
+  .pager { display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: 4px; margin-top: 24px; }
+  .pager:empty { display: none; }
+  .pager button, .pager .gap {
+    min-width: 40px;
+    height: 40px;
+    padding: 0 8px;
+    font-size: 14px;
+    border-radius: 8px;
+  }
+  .pager button {
+    color: var(--fg-secondary);
+    background: var(--bg);
+    border: 1px solid var(--border);
+    cursor: pointer;
+  }
+  .pager button:hover { background: var(--bg-subtle); }
+  .pager button[aria-current="page"] { color: var(--fg-on-accent); background: var(--fg); border-color: var(--fg); font-weight: 700; }
+  .pager button:disabled { color: var(--fg-disabled); background: var(--bg-muted); border-color: var(--border); cursor: default; }
+  .pager .gap { display: inline-flex; align-items: center; justify-content: center; color: var(--fg-secondary); }
   .empty { text-align: center; color: var(--fg-secondary); font-size: 14px; padding: 32px 0; }
   .foot { margin: 32px 0 0; text-align: center; color: var(--fg-secondary); font-size: 12px; line-height: 18px; }
   @media (min-width: 641px) {
@@ -199,6 +218,7 @@
   <section class="list-col">
     <h2>등록된 맛집</h2>
     <div id="list"></div>
+    <nav id="pager" class="pager" aria-label="페이지 이동"></nav>
   </section>
   </div>
   <p class="foot">시각 디자인은 Kyobo Design System의 시각 언어를 참고했어요.</p>
@@ -248,6 +268,58 @@
 
   var items = [];
   var loaded = false;
+  var page = 1;
+
+  var wideQuery = window.matchMedia("(min-width: 900px)");
+  // PC는 카드 2열 x 4행, 모바일은 1열 x 6개.
+  function pageSize() { return wideQuery.matches ? 8 : 6; }
+
+  // 1 … 4 5 6 … 10 형태로 보여 줄 번호 목록을 만든다.
+  function pageNumbers(total, current) {
+    var nums = [];
+    for (var p = 1; p <= total; p++) {
+      if (p === 1 || p === total || Math.abs(p - current) <= 1) nums.push(p);
+      else if (nums[nums.length - 1] !== "…") nums.push("…");
+    }
+    return nums;
+  }
+
+  function goToPage(p) {
+    page = p;
+    render();
+    var top = document.querySelector(".list-col").getBoundingClientRect().top;
+    if (top < 0) document.querySelector(".list-col").scrollIntoView({ block: "start" });
+  }
+
+  function pagerButton(label, onClick, options) {
+    var b = document.createElement("button");
+    b.type = "button";
+    b.textContent = label;
+    if (options && options.disabled) b.disabled = true;
+    if (options && options.current) b.setAttribute("aria-current", "page");
+    if (options && options.aria) b.setAttribute("aria-label", options.aria);
+    b.addEventListener("click", onClick);
+    return b;
+  }
+
+  function renderPager(totalPages) {
+    var pager = $("pager");
+    pager.textContent = "";
+    if (totalPages <= 1) return;
+    pager.appendChild(pagerButton("이전", function () { goToPage(page - 1); }, { disabled: page === 1 }));
+    pageNumbers(totalPages, page).forEach(function (n) {
+      if (n === "…") {
+        var gap = document.createElement("span");
+        gap.className = "gap";
+        gap.textContent = "…";
+        pager.appendChild(gap);
+      } else {
+        pager.appendChild(pagerButton(String(n), function () { goToPage(n); },
+          { current: n === page, aria: n + "페이지" }));
+      }
+    });
+    pager.appendChild(pagerButton("다음", function () { goToPage(page + 1); }, { disabled: page === totalPages }));
+  }
 
   function render() {
     var list = $("list");
@@ -257,9 +329,14 @@
       empty.className = "empty";
       empty.textContent = loaded ? "아직 등록된 맛집이 없어요." : "불러오는 중...";
       list.appendChild(empty);
+      renderPager(0);
       return;
     }
-    items.forEach(function (it) {
+    var size = pageSize();
+    var totalPages = Math.ceil(items.length / size);
+    if (page > totalPages) page = totalPages;
+    if (page < 1) page = 1;
+    items.slice((page - 1) * size, page * size).forEach(function (it) {
       var card = document.createElement("div");
       card.className = "card";
 
@@ -313,6 +390,7 @@
       }
       list.appendChild(card);
     });
+    renderPager(totalPages);
   }
 
   $("form").addEventListener("submit", function (e) {
@@ -335,6 +413,7 @@
     addItem({ name: name, menu: menu, rating: rating, review: review })
       .then(function (row) {
         items.unshift(row);
+        page = 1; // 새 기록은 맨 위(1페이지)에 보인다.
         render();
         $("form").reset();
         $("name").focus();
@@ -365,6 +444,7 @@
       });
   });
 
+  wideQuery.addEventListener("change", render);
   render();
   loadItems().then(function (rows) {
     items = rows;
