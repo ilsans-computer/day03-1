@@ -145,6 +145,8 @@
     }
     form { position: sticky; top: 24px; }
     .list-col h2 { margin-top: 0; }
+    #list { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; }
+    #list .empty { grid-column: 1 / -1; }
   }
   @media (max-width: 640px) {
     /* 모바일 입력 높이 50px */
