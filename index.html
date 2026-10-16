@@ -22,10 +22,10 @@
     --accent: #5055B1;
     --accent-press: #3F4391;
     --negative: #EC1F2D;
-    --shadow-soft: 0 5px 10px rgba(0, 0, 0, .10);
     --font: "Noto Sans KR", Roboto, -apple-system, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
   }
   * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
   body {
     margin: 0;
     font-family: var(--font);
@@ -37,8 +37,9 @@
   }
   .wrap { max-width: 640px; margin: 0 auto; padding: 32px 16px 48px; }
   h1 { margin: 0 0 4px; font-size: 24px; line-height: 34px; font-weight: 700; color: var(--fg); }
+  h2 { margin: 0 0 12px; font-size: 18px; line-height: 28px; font-weight: 700; }
   .sub { margin: 0 0 24px; color: var(--fg-secondary); font-size: 14px; line-height: 22px; }
-  form, .card {
+  .box, .card {
     background: var(--bg);
     border: 1px solid var(--border);
     border-radius: 12px;
@@ -67,8 +68,97 @@
     border-color: var(--accent);
   }
   textarea { height: auto; min-height: 84px; padding: 12px; resize: vertical; }
-  .error { min-height: 22px; margin: 0 0 8px; color: var(--negative); font-size: 14px; line-height: 22px; }
+  .error, .msg { min-height: 22px; margin: 0 0 8px; color: var(--negative); font-size: 14px; line-height: 22px; }
+  .msg.ok { color: var(--accent); }
+  .hint { margin: 0 0 12px; color: var(--fg-secondary); font-size: 12px; line-height: 18px; }
+  .hint:empty { display: none; }
   button { font-family: var(--font); letter-spacing: inherit; }
+
+  /* 헤더 / 로그인한 사용자 영역 */
+  .head { display: flex; flex-direction: column; gap: 12px; margin-bottom: 24px; }
+  .head .sub { margin-bottom: 0; }
+  .userbar { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; }
+  .who { font-size: 14px; font-weight: 700; margin-right: 4px; }
+  /* button-tertiary: 배경 없는 텍스트 형태 */
+  .link, .del {
+    height: 32px;
+    padding: 0 8px;
+    font-size: 14px;
+    color: var(--fg-secondary);
+    background: none;
+    border: 0;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+  .link:hover, .del:hover { background: var(--bg-muted); color: var(--fg); }
+  .link:disabled { color: var(--fg-disabled); cursor: default; background: none; }
+  .badge {
+    display: inline-block;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 6px;
+    margin-left: 4px;
+    font-family: Roboto, var(--font);
+    font-size: 12px;
+    line-height: 20px;
+    font-weight: 700;
+    text-align: center;
+    color: var(--fg-on-accent);
+    background: var(--accent);
+    border-radius: 9999px;
+  }
+  .badge:empty { display: none; }
+
+  /* 로그인 / 가입 */
+  .auth { max-width: 400px; margin: 24px auto 0; }
+  .tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 4px; margin-bottom: 20px; background: var(--bg-subtle); border-radius: 8px; }
+  .tabs button {
+    height: 36px;
+    font-size: 14px;
+    color: var(--fg-secondary);
+    background: none;
+    border: 0;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+  .tabs button[aria-selected="true"] { color: var(--fg); background: var(--bg); font-weight: 700; box-shadow: 0 1px 2px rgba(0, 0, 0, .10); }
+
+  /* 알림 / 패널 */
+  .notice {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 16px;
+    padding: 12px 16px;
+    font-size: 14px;
+    line-height: 22px;
+    background: var(--bg);
+    border: 1px solid var(--negative);
+    border-radius: 12px;
+  }
+  .panel { margin-bottom: 24px; }
+  .panel .row { display: flex; gap: 8px; }
+  .panel .row button { flex: 1; }
+  .users { list-style: none; margin: 0; padding: 0; }
+  .users li {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 12px 0;
+    border-top: 1px solid var(--border);
+    font-size: 14px;
+  }
+  .users li:first-child { border-top: 0; }
+  .users .uid { font-weight: 700; word-break: break-all; }
+  .users .meta { color: var(--fg-secondary); font-size: 12px; margin-left: 8px; }
+  .users .acts { display: flex; gap: 4px; }
+  .status { display: inline-block; padding: 0 8px; font-size: 12px; line-height: 20px; font-weight: 500; border: 1px solid var(--border-strong); border-radius: 9999px; color: var(--fg-secondary); }
+  .status.pending { color: var(--accent); border-color: var(--accent); }
+
   /* button-primary: 한 영역에 하나의 주 행동 */
   button.add {
     width: 100%;
@@ -83,6 +173,21 @@
   }
   button.add:hover, button.add:active { background: var(--accent-press); }
   /* button-secondary: 옅은 보더 + 중립 표면 */
+  button.ai, button.sub-btn {
+    height: 38px;
+    padding: 0 16px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--fg);
+    background: var(--bg);
+    border: 1px solid var(--border-strong);
+    border-radius: 8px;
+    cursor: pointer;
+  }
+  button.ai:hover, button.sub-btn:hover { background: var(--bg-subtle); }
+  button.ai:disabled, button.add:disabled, button.sub-btn:disabled { color: var(--fg-disabled); background: var(--bg-muted); border-color: var(--border); cursor: default; }
+  button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
   .ai-row { display: flex; flex-direction: column; gap: 12px; margin-bottom: 16px; }
   /* AI 모델 아이콘: 선택된 것만 색, 나머지는 회색 */
   .models { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
@@ -103,25 +208,11 @@
   .model svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; }
   .model:hover { background: var(--bg-subtle); }
   .model[aria-checked="true"] { color: var(--accent); border-color: var(--accent); font-weight: 700; }
-  .total { margin: 0 0 12px; font-size: 14px; line-height: 22px; font-weight: 500; color: var(--fg-secondary); }
-  .total:empty { display: none; }
-  #list.loading { opacity: .5; }
-  button.ai {
-    height: 38px;
-    padding: 0 16px;
-    font-size: 14px;
-    font-weight: 500;
-    color: var(--fg);
-    background: var(--bg);
-    border: 1px solid var(--border-strong);
-    border-radius: 8px;
-    cursor: pointer;
-  }
-  button.ai:hover { background: var(--bg-subtle); }
-  button.ai:disabled, button.add:disabled { color: var(--fg-disabled); background: var(--bg-muted); border-color: var(--border); cursor: default; }
-  button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-  h2 { margin: 32px 0 12px; font-size: 18px; line-height: 28px; font-weight: 700; }
+
   #list { display: grid; gap: 12px; }
+  #list.loading { opacity: .5; }
+  .total { margin: 12px 0 0; text-align: center; font-size: 14px; line-height: 22px; font-weight: 500; color: var(--fg-secondary); }
+  .total:empty { display: none; }
   .card .top { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
   .card h3 { margin: 0; font-size: 18px; line-height: 28px; font-weight: 700; word-break: break-all; }
   .menu { margin: 0; color: var(--fg-secondary); font-size: 14px; line-height: 22px; word-break: break-all; }
@@ -137,19 +228,7 @@
     line-height: 22px;
     word-break: break-all;
   }
-  /* button-tertiary: 배경 없는 텍스트 형태 */
-  .del {
-    flex: none;
-    height: 32px;
-    padding: 0 8px;
-    font-size: 14px;
-    color: var(--fg-secondary);
-    background: none;
-    border: 0;
-    border-radius: 8px;
-    cursor: pointer;
-  }
-  .del:hover { background: var(--bg-muted); color: var(--fg); }
+  .del { flex: none; }
   .pager { display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: 4px; margin-top: 24px; }
   .pager:empty { display: none; }
   .pager button, .pager .gap {
@@ -173,6 +252,8 @@
   .foot { margin: 32px 0 0; text-align: center; color: var(--fg-secondary); font-size: 12px; line-height: 18px; }
   @media (min-width: 641px) {
     h1 { font-size: 32px; line-height: 44px; }
+    .head { flex-direction: row; align-items: flex-start; justify-content: space-between; }
+    .userbar { padding-top: 8px; justify-content: flex-end; }
   }
   /* PC: 왼쪽 입력란 / 오른쪽 맛집 카드 목록 */
   @media (min-width: 900px) {
@@ -183,7 +264,7 @@
       gap: 24px;
       align-items: start;
     }
-    form { position: sticky; top: 24px; }
+    #form { position: sticky; top: 24px; }
     #list { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; }
     #list .empty { grid-column: 1 / -1; }
   }
@@ -191,149 +272,412 @@
     /* 모바일 입력 높이 50px */
     input, select { height: 50px; }
     button.add { height: 50px; }
-    button.ai { height: 44px; }
+    button.ai, button.sub-btn { height: 44px; }
+    .tabs button { height: 40px; }
   }
 </style>
 </head>
 <body>
 <div class="wrap">
-  <h1>우리 동네 숨은 맛집</h1>
-  <p class="sub">가본 맛집을 기록하고 동네 사람들과 함께 봐요.</p>
-
-  <div class="layout">
-  <form id="form" novalidate>
-    <label>식당 이름 *
-      <input id="name" maxlength="30" placeholder="예: 골목 칼국수" autocomplete="off">
-    </label>
-    <label>메뉴
-      <input id="menu" maxlength="30" placeholder="예: 바지락 칼국수" autocomplete="off">
-    </label>
-    <label>별점 *
-      <select id="rating">
-        <option value="">선택하세요</option>
-        <option value="5">★★★★★ (5)</option>
-        <option value="4">★★★★☆ (4)</option>
-        <option value="3">★★★☆☆ (3)</option>
-        <option value="2">★★☆☆☆ (2)</option>
-        <option value="1">★☆☆☆☆ (1)</option>
-      </select>
-    </label>
-    <label>한줄평
-      <textarea id="review" maxlength="100" placeholder="100자 이내"></textarea>
-    </label>
-    <div class="ai-row">
-      <div class="models" id="models" role="radiogroup" aria-label="AI 모델 선택">
-        <button type="button" class="model" role="radio" aria-checked="true" data-model="" title="자동: 되는 모델을 순서대로 시도해요">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 0 1-13.7 5.6"/><path d="M4 12a8 8 0 0 1 13.7-5.6"/><path d="M18 2.5v4h-4"/><path d="M6 21.5v-4h4"/></svg>
-          <span>자동</span>
-        </button>
-        <button type="button" class="model" role="radio" aria-checked="false" data-model="nvidia/nemotron-3-ultra-550b-a55b:free" title="Nemotron 3 Ultra">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l7.8 4.5v9L12 21l-7.8-4.5v-9z"/><circle cx="12" cy="12" r="2.5"/></svg>
-          <span>Nemotron</span>
-        </button>
-        <button type="button" class="model" role="radio" aria-checked="false" data-model="google/gemma-4-26b-a4b-it:free" title="Gemma 4 26B">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l8 9-8 9-8-9z"/></svg>
-          <span>Gemma 26B</span>
-        </button>
-        <button type="button" class="model" role="radio" aria-checked="false" data-model="google/gemma-4-31b-it:free" title="Gemma 4 31B">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4h12l3 5-9 11L3 9z"/><path d="M3 9h18"/><path d="M9 4l3 5 3-5"/><path d="M12 9v11"/></svg>
-          <span>Gemma 31B</span>
-        </button>
-      </div>
-      <button type="button" class="ai" id="ai">AI 한줄평 추천</button>
+  <header class="head">
+    <div>
+      <h1>우리 동네 숨은 맛집</h1>
+      <p class="sub">가본 맛집을 기록하고 동네 사람들과 함께 봐요.</p>
     </div>
-    <p class="error" id="error" role="alert"></p>
-    <button type="submit" class="add">추가</button>
-  </form>
+    <div class="userbar" id="userbar" hidden>
+      <span class="who" id="who"></span>
+      <button type="button" class="link" id="btnAdmin" hidden>가입 승인<span class="badge" id="pendingBadge"></span></button>
+      <button type="button" class="link" id="btnPw">비밀번호 변경</button>
+      <button type="button" class="link" id="btnLogout">로그아웃</button>
+    </div>
+  </header>
 
-  <section class="list-col">
-    <p class="total" id="total" aria-live="polite"></p>
-    <div id="list"></div>
-    <nav id="pager" class="pager" aria-label="페이지 이동"></nav>
+  <!-- 로그인 / 가입 신청: 로그인해야 아래 화면을 볼 수 있다 -->
+  <section id="auth" class="auth box" hidden>
+    <div class="tabs" role="tablist" aria-label="로그인 또는 가입">
+      <button type="button" role="tab" id="tabLogin" aria-selected="true">로그인</button>
+      <button type="button" role="tab" id="tabSignup" aria-selected="false">가입 신청</button>
+    </div>
+    <form id="authForm" novalidate>
+      <label>ID
+        <input id="authId" maxlength="20" placeholder="영문, 숫자, _ 3~20자" autocomplete="username" autocapitalize="off" spellcheck="false">
+      </label>
+      <label>비밀번호
+        <input id="authPw" type="password" maxlength="64" placeholder="4자 이상" autocomplete="current-password">
+      </label>
+      <p class="hint" id="authHint"></p>
+      <p class="msg" id="authMsg" role="alert"></p>
+      <button type="submit" class="add" id="authSubmit">로그인</button>
+    </form>
   </section>
+
+  <div id="app" hidden>
+    <div class="notice" id="defaultNotice" role="alert" hidden>
+      <span>기본 비밀번호(1234)를 쓰고 있어요. 다른 사람이 들어오지 못하도록 지금 바꿔 주세요.</span>
+      <button type="button" class="sub-btn" id="noticePw">비밀번호 변경</button>
+    </div>
+
+    <section id="panelPw" class="panel box" hidden>
+      <h2>비밀번호 변경</h2>
+      <form id="pwForm" novalidate>
+        <label>현재 비밀번호
+          <input id="pwCurrent" type="password" maxlength="64" autocomplete="current-password">
+        </label>
+        <label>새 비밀번호
+          <input id="pwNext" type="password" maxlength="64" placeholder="4자 이상" autocomplete="new-password">
+        </label>
+        <p class="msg" id="pwMsg" role="alert"></p>
+        <div class="row">
+          <button type="button" class="sub-btn" id="pwCancel">닫기</button>
+          <button type="submit" class="add" id="pwSubmit">변경</button>
+        </div>
+      </form>
+    </section>
+
+    <section id="panelAdmin" class="panel box" hidden>
+      <h2>가입 승인</h2>
+      <p class="msg" id="adminMsg" role="alert"></p>
+      <ul class="users" id="userList"></ul>
+    </section>
+
+    <div class="layout">
+      <form id="form" class="box" novalidate>
+        <label>식당 이름 *
+          <input id="name" maxlength="30" placeholder="예: 골목 칼국수" autocomplete="off">
+        </label>
+        <label>메뉴
+          <input id="menu" maxlength="30" placeholder="예: 바지락 칼국수" autocomplete="off">
+        </label>
+        <label>별점 *
+          <select id="rating">
+            <option value="">선택하세요</option>
+            <option value="5">★★★★★ (5)</option>
+            <option value="4">★★★★☆ (4)</option>
+            <option value="3">★★★☆☆ (3)</option>
+            <option value="2">★★☆☆☆ (2)</option>
+            <option value="1">★☆☆☆☆ (1)</option>
+          </select>
+        </label>
+        <label>한줄평
+          <textarea id="review" maxlength="100" placeholder="100자 이내"></textarea>
+        </label>
+        <div class="ai-row">
+          <div class="models" id="models" role="radiogroup" aria-label="AI 모델 선택">
+            <button type="button" class="model" role="radio" aria-checked="true" data-model="" title="자동: 되는 모델을 순서대로 시도해요">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 0 1-13.7 5.6"/><path d="M4 12a8 8 0 0 1 13.7-5.6"/><path d="M18 2.5v4h-4"/><path d="M6 21.5v-4h4"/></svg>
+              <span>자동</span>
+            </button>
+            <button type="button" class="model" role="radio" aria-checked="false" data-model="nvidia/nemotron-3-ultra-550b-a55b:free" title="Nemotron 3 Ultra">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l7.8 4.5v9L12 21l-7.8-4.5v-9z"/><circle cx="12" cy="12" r="2.5"/></svg>
+              <span>Nemotron</span>
+            </button>
+            <button type="button" class="model" role="radio" aria-checked="false" data-model="google/gemma-4-26b-a4b-it:free" title="Gemma 4 26B">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l8 9-8 9-8-9z"/></svg>
+              <span>Gemma 26B</span>
+            </button>
+            <button type="button" class="model" role="radio" aria-checked="false" data-model="google/gemma-4-31b-it:free" title="Gemma 4 31B">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4h12l3 5-9 11L3 9z"/><path d="M3 9h18"/><path d="M9 4l3 5 3-5"/><path d="M12 9v11"/></svg>
+              <span>Gemma 31B</span>
+            </button>
+          </div>
+          <button type="button" class="ai" id="ai">AI 한줄평 추천</button>
+        </div>
+        <p class="error" id="error" role="alert"></p>
+        <button type="submit" class="add" id="addBtn">추가</button>
+      </form>
+
+      <section class="list-col">
+        <div id="list"></div>
+        <nav id="pager" class="pager" aria-label="페이지 이동"></nav>
+        <p class="total" id="total" aria-live="polite"></p>
+      </section>
+    </div>
   </div>
+
   <p class="foot">시각 디자인은 Kyobo Design System의 시각 언어를 참고했어요.</p>
 </div>
 
 <script>
-  // Supabase 공개(publishable) 키: 브라우저에 노출돼도 되는 키이며, 접근은 RLS가 제한한다.
+  // Supabase 공개(publishable) 키: 브라우저에 노출돼도 되는 키다.
+  // 맛집·계정 데이터는 DB에 직접 접근할 수 없고, 로그인이 필요한 서버 함수(api)로만 읽고 쓴다.
   var SUPABASE_URL = "https://afhohlawvswuvrqgaghg.supabase.co";
   var SUPABASE_KEY = "sb_publishable_2b-Mf80Ja1cUxl3W3mOULA_wnNM4xTA";
-  var TABLE = SUPABASE_URL + "/rest/v1/restaurants";
-  var HEADERS = {
-    apikey: SUPABASE_KEY,
-    Authorization: "Bearer " + SUPABASE_KEY,
-    "Content-Type": "application/json"
-  };
+  var API = SUPABASE_URL + "/functions/v1/api";
+  var TOKEN_KEY = "restaurant_token";
   var $ = function (id) { return document.getElementById(id); };
 
-  function request(url, options) {
-    return fetch(url, options).then(function (res) {
-      if (!res.ok) throw new Error("HTTP " + res.status);
-      return res.status === 204 ? null : res.json();
+  // ---------- 로그인 토큰 보관 ----------
+  function readToken() {
+    try { return localStorage.getItem(TOKEN_KEY) || ""; } catch (e) { return ""; }
+  }
+  function writeToken(t) {
+    try { if (t) localStorage.setItem(TOKEN_KEY, t); else localStorage.removeItem(TOKEN_KEY); } catch (e) { /* 저장 불가: 새로고침 시 다시 로그인 */ }
+  }
+  var token = readToken();
+  var currentUser = null;
+
+  // ---------- 서버 호출 ----------
+  function api(action, payload) {
+    var body = Object.assign({ action: action, token: token }, payload || {});
+    return fetch(API, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", apikey: SUPABASE_KEY },
+      body: JSON.stringify(body)
+    }).then(function (res) {
+      return res.json().catch(function () { return {}; }).then(function (data) {
+        if (!res.ok) {
+          var err = new Error(data.error || "요청에 실패했어요.");
+          err.status = res.status;
+          err.code = data.code;
+          throw err;
+        }
+        return data;
+      });
     });
   }
 
-  // 데이터 접근 계층: UI는 이 네 함수만 사용한다.
-  // 한 페이지 분량만 서버에서 가져오고, 전체 개수는 Content-Range 헤더("0-7/200004")에서 읽는다.
-  function loadPage(pageNo, size) {
-    var url = TABLE + "?select=*&order=created_at.desc,id.desc&limit=" + size + "&offset=" + (pageNo - 1) * size;
-    return fetch(url, { headers: Object.assign({ Prefer: "count=exact" }, HEADERS) }).then(function (res) {
-      // 범위를 벗어난 페이지(416)도 전체 개수는 헤더로 돌려준다.
-      if (!res.ok && res.status !== 416) throw new Error("HTTP " + res.status);
-      var m = /\/(\d+)$/.exec(res.headers.get("Content-Range") || "");
-      var total = m ? Number(m[1]) : 0;
-      var rows = res.ok ? res.json() : Promise.resolve([]);
-      return rows.then(function (r) { return { rows: r, total: total }; });
+  // 오류를 화면에 보여 준다. 로그인이 풀렸으면 로그인 화면으로 돌아간다.
+  function showError(err, el) {
+    if (err && err.code === "auth" && currentUser) { forceLogout("로그인이 만료됐어요. 다시 로그인해 주세요."); return; }
+    el.classList.remove("ok");
+    el.textContent = (err && err.status) ? err.message : "서버에 연결하지 못했어요. 잠시 후 다시 시도해 주세요.";
+  }
+
+  // 데이터 접근 계층: 화면은 이 함수들만 사용한다.
+  // 한 페이지 분량만 서버에서 가져오고, 전체 개수도 서버가 알려 준다.
+  function loadPage(pageNo, size) { return api("list", { page: pageNo, size: size }); }
+  function addItem(item) { return api("add", item); }
+  function removeItem(id) { return api("remove", { id: id }); }
+  function suggestReview(item) { return api("suggest", item).then(function (d) { return d.review; }); }
+
+  // ---------- 화면 전환 ----------
+  function showAuth(message) {
+    currentUser = null;
+    $("app").hidden = true;
+    $("userbar").hidden = true;
+    $("auth").hidden = false;
+    $("panelPw").hidden = true;
+    $("panelAdmin").hidden = true;
+    setAuthTab("login");
+    $("authPw").value = "";
+    if (message) setMsg($("authMsg"), message, false);
+  }
+
+  function showApp(user, usingDefaultPassword) {
+    currentUser = user;
+    $("auth").hidden = true;
+    $("app").hidden = false;
+    $("userbar").hidden = false;
+    $("who").textContent = user.id + (user.role === "admin" ? " (관리자)" : "") + " 님";
+    $("btnAdmin").hidden = user.role !== "admin";
+    $("defaultNotice").hidden = !usingDefaultPassword;
+    items = []; total = 0; loaded = false; page = 1;
+    render();
+    load();
+    if (user.role === "admin") refreshUsers();
+  }
+
+  function forceLogout(message) {
+    token = "";
+    writeToken("");
+    showAuth(message);
+  }
+
+  function setMsg(el, text, ok) {
+    el.textContent = text || "";
+    el.classList.toggle("ok", !!ok);
+  }
+
+  // ---------- 로그인 / 가입 ----------
+  var authMode = "login";
+  function setAuthTab(mode) {
+    authMode = mode;
+    $("tabLogin").setAttribute("aria-selected", mode === "login" ? "true" : "false");
+    $("tabSignup").setAttribute("aria-selected", mode === "signup" ? "true" : "false");
+    $("authSubmit").textContent = mode === "login" ? "로그인" : "가입 신청";
+    $("authPw").setAttribute("autocomplete", mode === "login" ? "current-password" : "new-password");
+    $("authHint").textContent = mode === "signup"
+      ? "개인정보는 받지 않아요. ID와 비밀번호만 입력하면 되고, 관리자가 승인하면 로그인할 수 있어요."
+      : "";
+    setMsg($("authMsg"), "");
+  }
+  $("tabLogin").addEventListener("click", function () { setAuthTab("login"); });
+  $("tabSignup").addEventListener("click", function () { setAuthTab("signup"); });
+
+  $("authForm").addEventListener("submit", function (e) {
+    e.preventDefault();
+    var id = $("authId").value.trim();
+    var pw = $("authPw").value;
+    var msg = $("authMsg");
+    if (!id || !pw) { setMsg(msg, "ID와 비밀번호를 입력해 주세요.", false); return; }
+    var btn = $("authSubmit");
+    btn.disabled = true;
+    setMsg(msg, "");
+
+    if (authMode === "signup") {
+      api("signup", { id: id, password: pw })
+        .then(function (d) {
+          setAuthTab("login");
+          $("authPw").value = "";
+          setMsg(msg, d.message, true);
+        })
+        .catch(function (err) { showError(err, msg); })
+        .then(function () { btn.disabled = false; });
+      return;
+    }
+
+    api("login", { id: id, password: pw })
+      .then(function (d) {
+        token = d.token;
+        writeToken(token);
+        $("authPw").value = "";
+        showApp(d.user, d.usingDefaultPassword);
+      })
+      .catch(function (err) { showError(err, msg); })
+      .then(function () { btn.disabled = false; });
+  });
+
+  $("btnLogout").addEventListener("click", function () {
+    api("logout").catch(function () { /* 서버 응답과 상관없이 이 기기에서는 로그아웃 */ })
+      .then(function () { forceLogout(""); $("authId").value = ""; });
+  });
+
+  // ---------- 비밀번호 변경 ----------
+  function openPwPanel() {
+    $("panelAdmin").hidden = true;
+    $("panelPw").hidden = false;
+    setMsg($("pwMsg"), "");
+    $("pwCurrent").focus();
+  }
+  $("btnPw").addEventListener("click", function () {
+    if ($("panelPw").hidden) openPwPanel(); else $("panelPw").hidden = true;
+  });
+  $("noticePw").addEventListener("click", openPwPanel);
+  $("pwCancel").addEventListener("click", function () { $("panelPw").hidden = true; });
+
+  $("pwForm").addEventListener("submit", function (e) {
+    e.preventDefault();
+    var cur = $("pwCurrent").value;
+    var next = $("pwNext").value;
+    var msg = $("pwMsg");
+    if (!cur || !next) { setMsg(msg, "현재 비밀번호와 새 비밀번호를 입력해 주세요.", false); return; }
+    if (next.length < 4) { setMsg(msg, "새 비밀번호는 4자 이상이어야 해요.", false); return; }
+    var btn = $("pwSubmit");
+    btn.disabled = true;
+    api("changePassword", { current: cur, next: next })
+      .then(function () {
+        $("pwForm").reset();
+        $("panelPw").hidden = true;
+        $("defaultNotice").hidden = true;
+      })
+      .catch(function (err) { showError(err, msg); })
+      .then(function () { btn.disabled = false; });
+  });
+
+  // ---------- 관리자: 가입 승인 ----------
+  var users = [];
+  var STATUS_LABEL = { pending: "승인 대기", approved: "승인됨", rejected: "거절됨" };
+
+  function refreshUsers() {
+    return api("adminUsers").then(function (d) {
+      users = d.users;
+      renderUsers();
+    }).catch(function (err) { showError(err, $("adminMsg")); });
+  }
+
+  function renderUsers() {
+    var pending = users.filter(function (u) { return u.status === "pending"; }).length;
+    $("pendingBadge").textContent = pending ? String(pending) : "";
+    var ul = $("userList");
+    ul.textContent = "";
+    if (!users.length) {
+      var li = document.createElement("li");
+      li.textContent = "가입 신청이 아직 없어요.";
+      ul.appendChild(li);
+      return;
+    }
+    var order = { pending: 0, rejected: 1, approved: 2 };
+    users.slice().sort(function (a, b) { return order[a.status] - order[b.status]; }).forEach(function (u) {
+      var li = document.createElement("li");
+      var left = document.createElement("div");
+      var uid = document.createElement("span");
+      uid.className = "uid";
+      uid.textContent = u.id;
+      var st = document.createElement("span");
+      st.className = "status " + u.status;
+      st.textContent = STATUS_LABEL[u.status];
+      var meta = document.createElement("span");
+      meta.className = "meta";
+      meta.textContent = new Date(u.created_at).toLocaleDateString("ko-KR");
+      left.appendChild(uid);
+      left.appendChild(document.createTextNode(" "));
+      left.appendChild(st);
+      left.appendChild(meta);
+      li.appendChild(left);
+
+      var acts = document.createElement("div");
+      acts.className = "acts";
+      if (u.status !== "approved") acts.appendChild(decideButton(u, "approve", "승인"));
+      if (u.status === "pending") acts.appendChild(decideButton(u, "reject", "거절"));
+      if (u.status === "approved") acts.appendChild(decideButton(u, "reject", "차단"));
+      li.appendChild(acts);
+      ul.appendChild(li);
     });
   }
-  function addItem(item) {
-    return request(TABLE, {
-      method: "POST",
-      headers: Object.assign({ Prefer: "return=representation" }, HEADERS),
-      body: JSON.stringify(item)
-    }).then(function (rows) { return rows[0]; });
-  }
-  function removeItem(id) {
-    return request(TABLE + "?id=eq." + encodeURIComponent(id), { method: "DELETE", headers: HEADERS });
+
+  function decideButton(u, decision, label) {
+    var b = document.createElement("button");
+    b.type = "button";
+    b.className = "link";
+    b.textContent = label;
+    b.addEventListener("click", function () {
+      b.disabled = true;
+      setMsg($("adminMsg"), "");
+      api("adminDecide", { userId: u.id, decision: decision })
+        .then(refreshUsers)
+        .catch(function (err) { b.disabled = false; showError(err, $("adminMsg")); });
+    });
+    return b;
   }
 
-  function suggestReview(item) {
-    return request(SUPABASE_URL + "/functions/v1/suggest-review", {
-      method: "POST",
-      headers: HEADERS,
-      body: JSON.stringify(item)
-    }).then(function (data) { return data.review; });
-  }
+  $("btnAdmin").addEventListener("click", function () {
+    if (!$("panelAdmin").hidden) { $("panelAdmin").hidden = true; return; }
+    $("panelPw").hidden = true;
+    $("panelAdmin").hidden = false;
+    setMsg($("adminMsg"), "");
+    refreshUsers();
+  });
 
+  // ---------- 맛집 목록 ----------
   var items = [];   // 현재 페이지의 맛집
   var total = 0;    // 전체 맛집 수(서버 기준)
   var loaded = false;
   var page = 1;
   var loadToken = 0;
 
-  var wideQuery = window.matchMedia("(min-width: 900px)");
-  // PC는 카드 2열 x 4행, 모바일은 1열 x 6개.
-  function pageSize() { return wideQuery.matches ? 8 : 6; }
+  // 한 화면에 6개: PC는 2열 x 3행, 모바일은 1열 x 6개.
+  var PAGE_SIZE = 6;
+  function pageSize() { return PAGE_SIZE; }
 
   // 현재 페이지를 서버에서 불러와 그린다. 오래된 응답은 버린다.
   function load() {
-    var token = ++loadToken;
+    var t = ++loadToken;
     var size = pageSize();
     $("list").classList.add("loading");
     return loadPage(page, size).then(function (r) {
-      if (token !== loadToken) return;
+      if (t !== loadToken) return;
       var pages = Math.max(1, Math.ceil(r.total / size));
       if (page > pages) { page = pages; return load(); } // 삭제로 비게 된 페이지는 앞 페이지로
       items = r.rows;
       total = r.total;
       loaded = true;
       render();
-    }).catch(function () {
-      if (token !== loadToken) return;
+    }).catch(function (err) {
+      if (t !== loadToken) return;
       loaded = true;
       render();
-      $("error").textContent = "목록을 불러오지 못했어요. 새로고침해 주세요.";
+      showError(err, $("error"));
+      if ($("error").textContent) $("error").textContent = "목록을 불러오지 못했어요. 새로고침해 주세요.";
     });
   }
 
@@ -421,9 +765,9 @@
         del.disabled = true;
         removeItem(it.id).then(function () {
           return load(); // 개수와 페이지를 서버 기준으로 다시 맞춘다.
-        }).catch(function () {
+        }).catch(function (err) {
           del.disabled = false;
-          $("error").textContent = "삭제하지 못했어요. 잠시 후 다시 시도해 주세요.";
+          showError(err, $("error"));
         });
       });
       top.appendChild(h);
@@ -461,6 +805,7 @@
     renderPager(totalPages);
   }
 
+  // ---------- 맛집 추가 / AI 추천 ----------
   $("form").addEventListener("submit", function (e) {
     e.preventDefault();
     var name = $("name").value.trim();
@@ -476,7 +821,7 @@
     if (review.length > 100) { err.textContent = "한줄평은 100자 이하로 써 주세요."; return; }
 
     err.textContent = "";
-    var btn = e.target.querySelector("button.add");
+    var btn = $("addBtn");
     btn.disabled = true;
     addItem({ name: name, menu: menu, rating: rating, review: review })
       .then(function () {
@@ -485,10 +830,19 @@
         $("name").focus();
         return load();
       })
-      .catch(function () {
-        err.textContent = "추가하지 못했어요. 잠시 후 다시 시도해 주세요.";
-      })
+      .catch(function (e2) { showError(e2, err); })
       .then(function () { btn.disabled = false; });
+  });
+
+  // AI 모델 아이콘: 눌러서 선택하고, 선택된 것만 색이 켜진다. 빈 값은 자동.
+  var selectedModel = "";
+  $("models").addEventListener("click", function (e) {
+    var btn = e.target.closest(".model");
+    if (!btn) return;
+    selectedModel = btn.getAttribute("data-model");
+    Array.prototype.forEach.call($("models").querySelectorAll(".model"), function (m) {
+      m.setAttribute("aria-checked", m === btn ? "true" : "false");
+    });
   });
 
   $("ai").addEventListener("click", function () {
@@ -504,28 +858,24 @@
     btn.textContent = "추천 중...";
     suggestReview({ name: name, menu: $("menu").value.trim(), rating: rating, model: selectedModel })
       .then(function (text) { $("review").value = text; })
-      .catch(function () { err.textContent = "AI 추천을 받지 못했어요. 잠시 후 다시 시도해 주세요."; })
+      .catch(function (e2) { showError(e2, err); })
       .then(function () {
         btn.disabled = false;
         btn.textContent = "AI 한줄평 추천";
       });
   });
 
-  // AI 모델 아이콘: 눌러서 선택하고, 선택된 것만 색이 켜진다. 빈 값은 자동.
-  var selectedModel = "";
-  $("models").addEventListener("click", function (e) {
-    var btn = e.target.closest(".model");
-    if (!btn) return;
-    selectedModel = btn.getAttribute("data-model");
-    Array.prototype.forEach.call($("models").querySelectorAll(".model"), function (m) {
-      m.setAttribute("aria-checked", m === btn ? "true" : "false");
-    });
-  });
-
-  // 화면 크기가 바뀌어 한 페이지 개수가 달라지면 1페이지부터 다시 불러온다.
-  wideQuery.addEventListener("change", function () { page = 1; load(); });
-  render();
-  load();
+  // ---------- 시작: 저장된 로그인이 있으면 확인하고, 없으면 로그인 화면 ----------
+  if (token) {
+    api("me").then(function (d) { showApp(d.user, false); })
+      .catch(function (err) {
+        // 로그인이 풀린 경우만 토큰을 버린다. 일시적인 네트워크 오류면 새로고침으로 다시 시도한다.
+        if (err.status) { token = ""; writeToken(""); showAuth(""); }
+        else { showAuth("서버에 연결하지 못했어요. 잠시 후 새로고침해 주세요."); }
+      });
+  } else {
+    showAuth("");
+  }
 </script>
 </body>
 </html>
