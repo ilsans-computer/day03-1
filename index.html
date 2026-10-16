@@ -92,6 +92,9 @@
   }
   .link:hover, .del:hover { background: var(--bg-muted); color: var(--fg); }
   .link:disabled { color: var(--fg-disabled); cursor: default; background: none; }
+  .link.danger { color: var(--negative); }
+  .link.danger:hover { background: var(--bg-muted); color: var(--negative); }
+  .link.danger:disabled { color: var(--fg-disabled); background: none; }
   .badge {
     display: inline-block;
     min-width: 20px;
@@ -174,7 +177,7 @@
   button.add:hover, button.add:active { background: var(--accent-press); }
   /* button-secondary: 옅은 보더 + 중립 표면 */
   button.ai, button.sub-btn {
-    height: 38px;
+    height: 34px;
     padding: 0 16px;
     font-size: 14px;
     font-weight: 500;
@@ -190,22 +193,23 @@
 
   .ai-row { display: flex; flex-direction: column; gap: 12px; margin-bottom: 16px; }
   /* AI 모델 아이콘: 선택된 것만 색, 나머지는 회색 */
-  .models { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+  .models { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
   .model {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 4px;
-    padding: 8px 4px;
-    font-size: 12px;
-    line-height: 18px;
+    gap: 0;
+    padding: 4px 2px;
+    font-size: 11px;
+    line-height: 16px;
+    white-space: nowrap;
     color: #80858E;
     background: var(--bg);
     border: 1px solid var(--border);
     border-radius: 8px;
     cursor: pointer;
   }
-  .model svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; }
+  .model svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; }
   .model:hover { background: var(--bg-subtle); }
   .model[aria-checked="true"] { color: var(--accent); border-color: var(--accent); font-weight: 700; }
 
@@ -272,7 +276,7 @@
     /* 모바일 입력 높이 50px */
     input, select { height: 50px; }
     button.add { height: 50px; }
-    button.ai, button.sub-btn { height: 44px; }
+    button.ai, button.sub-btn { height: 40px; }
     .tabs button { height: 40px; }
   }
 </style>
@@ -287,6 +291,7 @@
     <div class="userbar" id="userbar" hidden>
       <span class="who" id="who"></span>
       <button type="button" class="link" id="btnAdmin" hidden>가입 승인<span class="badge" id="pendingBadge"></span></button>
+      <button type="button" class="link danger" id="btnClear" hidden>맛집 전체 삭제</button>
       <button type="button" class="link" id="btnPw">비밀번호 변경</button>
       <button type="button" class="link" id="btnLogout">로그아웃</button>
     </div>
@@ -448,6 +453,7 @@
   function loadPage(pageNo, size) { return api("list", { page: pageNo, size: size }); }
   function addItem(item) { return api("add", item); }
   function removeItem(id) { return api("remove", { id: id }); }
+  function removeAllItems() { return api("removeAll"); }
   function suggestReview(item) { return api("suggest", item).then(function (d) { return d.review; }); }
 
   // ---------- 화면 전환 ----------
@@ -472,6 +478,7 @@
     $("brand").hidden = false;
     $("who").textContent = user.id + (user.role === "admin" ? " (관리자)" : "") + " 님";
     $("btnAdmin").hidden = user.role !== "admin";
+    $("btnClear").hidden = user.role !== "admin";
     $("defaultNotice").hidden = !usingDefaultPassword;
     items = []; total = 0; loaded = false; page = 1;
     render();
@@ -742,6 +749,7 @@
     list.textContent = "";
     list.classList.remove("loading");
     $("total").textContent = loaded ? "총 " + total.toLocaleString("ko-KR") + "개" : "";
+    $("btnClear").disabled = !loaded || !total;
     if (!items.length) {
       var empty = document.createElement("p");
       empty.className = "empty";
@@ -806,6 +814,19 @@
     });
     renderPager(totalPages);
   }
+
+  // ---------- 맛집 전체 삭제(관리자 전용) ----------
+  $("btnClear").addEventListener("click", function () {
+    if (!total) return;
+    var ok = window.confirm("등록된 맛집 " + total.toLocaleString("ko-KR") + "개를 모두 삭제할까요?\n삭제하면 되돌릴 수 없어요.");
+    if (!ok) return;
+    var btn = $("btnClear");
+    btn.disabled = true;
+    $("error").textContent = "";
+    removeAllItems()
+      .then(function () { page = 1; return load(); })
+      .catch(function (err) { showError(err, $("error")); btn.disabled = false; });
+  });
 
   // ---------- 맛집 추가 / AI 추천 ----------
   $("form").addEventListener("submit", function (e) {
