@@ -280,7 +280,7 @@
 <body>
 <div class="wrap">
   <header class="head">
-    <div>
+    <div id="brand" hidden>
       <h1>우리 동네 숨은 맛집</h1>
       <p class="sub">가본 맛집을 기록하고 동네 사람들과 함께 봐요.</p>
     </div>
@@ -455,6 +455,7 @@
     currentUser = null;
     $("app").hidden = true;
     $("userbar").hidden = true;
+    $("brand").hidden = true; // 로그인 화면에는 제목과 설명을 보여 주지 않는다.
     $("auth").hidden = false;
     $("panelPw").hidden = true;
     $("panelAdmin").hidden = true;
@@ -468,6 +469,7 @@
     $("auth").hidden = true;
     $("app").hidden = false;
     $("userbar").hidden = false;
+    $("brand").hidden = false;
     $("who").textContent = user.id + (user.role === "admin" ? " (관리자)" : "") + " 님";
     $("btnAdmin").hidden = user.role !== "admin";
     $("defaultNotice").hidden = !usingDefaultPassword;
