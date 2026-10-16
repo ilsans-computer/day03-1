@@ -83,8 +83,29 @@
   }
   button.add:hover, button.add:active { background: var(--accent-press); }
   /* button-secondary: 옅은 보더 + 중립 표면 */
-  .ai-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 16px; }
-  .ai-row select { flex: 1 1 160px; width: auto; height: 38px; margin-top: 0; font-size: 14px; }
+  .ai-row { display: flex; flex-direction: column; gap: 12px; margin-bottom: 16px; }
+  /* AI 모델 아이콘: 선택된 것만 색, 나머지는 회색 */
+  .models { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+  .model {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 8px 4px;
+    font-size: 12px;
+    line-height: 18px;
+    color: #80858E;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    cursor: pointer;
+  }
+  .model svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; }
+  .model:hover { background: var(--bg-subtle); }
+  .model[aria-checked="true"] { color: var(--accent); border-color: var(--accent); font-weight: 700; }
+  .total { margin: 0 0 12px; font-size: 14px; line-height: 22px; font-weight: 500; color: var(--fg-secondary); }
+  .total:empty { display: none; }
+  #list.loading { opacity: .5; }
   button.ai {
     height: 38px;
     padding: 0 16px;
@@ -163,14 +184,12 @@
       align-items: start;
     }
     form { position: sticky; top: 24px; }
-    .list-col h2 { margin-top: 0; }
     #list { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; }
     #list .empty { grid-column: 1 / -1; }
   }
   @media (max-width: 640px) {
     /* 모바일 입력 높이 50px */
     input, select { height: 50px; }
-    .ai-row select { height: 44px; }
     button.add { height: 50px; }
     button.ai { height: 44px; }
   }
@@ -203,12 +222,24 @@
       <textarea id="review" maxlength="100" placeholder="100자 이내"></textarea>
     </label>
     <div class="ai-row">
-      <select id="model" aria-label="AI 모델 선택">
-        <option value="">자동 (되는 모델 순서대로)</option>
-        <option value="nvidia/nemotron-3-ultra-550b-a55b:free">Nemotron 3 Ultra</option>
-        <option value="google/gemma-4-26b-a4b-it:free">Gemma 4 26B</option>
-        <option value="google/gemma-4-31b-it:free">Gemma 4 31B</option>
-      </select>
+      <div class="models" id="models" role="radiogroup" aria-label="AI 모델 선택">
+        <button type="button" class="model" role="radio" aria-checked="true" data-model="" title="자동: 되는 모델을 순서대로 시도해요">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 0 1-13.7 5.6"/><path d="M4 12a8 8 0 0 1 13.7-5.6"/><path d="M18 2.5v4h-4"/><path d="M6 21.5v-4h4"/></svg>
+          <span>자동</span>
+        </button>
+        <button type="button" class="model" role="radio" aria-checked="false" data-model="nvidia/nemotron-3-ultra-550b-a55b:free" title="Nemotron 3 Ultra">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l7.8 4.5v9L12 21l-7.8-4.5v-9z"/><circle cx="12" cy="12" r="2.5"/></svg>
+          <span>Nemotron</span>
+        </button>
+        <button type="button" class="model" role="radio" aria-checked="false" data-model="google/gemma-4-26b-a4b-it:free" title="Gemma 4 26B">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l8 9-8 9-8-9z"/></svg>
+          <span>Gemma 26B</span>
+        </button>
+        <button type="button" class="model" role="radio" aria-checked="false" data-model="google/gemma-4-31b-it:free" title="Gemma 4 31B">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4h12l3 5-9 11L3 9z"/><path d="M3 9h18"/><path d="M9 4l3 5 3-5"/><path d="M12 9v11"/></svg>
+          <span>Gemma 31B</span>
+        </button>
+      </div>
       <button type="button" class="ai" id="ai">AI 한줄평 추천</button>
     </div>
     <p class="error" id="error" role="alert"></p>
@@ -216,7 +247,7 @@
   </form>
 
   <section class="list-col">
-    <h2>등록된 맛집</h2>
+    <p class="total" id="total" aria-live="polite"></p>
     <div id="list"></div>
     <nav id="pager" class="pager" aria-label="페이지 이동"></nav>
   </section>
@@ -243,9 +274,18 @@
     });
   }
 
-  // 데이터 접근 계층: UI는 이 세 함수만 사용한다.
-  function loadItems() {
-    return request(TABLE + "?select=*&order=created_at.desc", { headers: HEADERS });
+  // 데이터 접근 계층: UI는 이 네 함수만 사용한다.
+  // 한 페이지 분량만 서버에서 가져오고, 전체 개수는 Content-Range 헤더("0-7/200004")에서 읽는다.
+  function loadPage(pageNo, size) {
+    var url = TABLE + "?select=*&order=created_at.desc,id.desc&limit=" + size + "&offset=" + (pageNo - 1) * size;
+    return fetch(url, { headers: Object.assign({ Prefer: "count=exact" }, HEADERS) }).then(function (res) {
+      // 범위를 벗어난 페이지(416)도 전체 개수는 헤더로 돌려준다.
+      if (!res.ok && res.status !== 416) throw new Error("HTTP " + res.status);
+      var m = /\/(\d+)$/.exec(res.headers.get("Content-Range") || "");
+      var total = m ? Number(m[1]) : 0;
+      var rows = res.ok ? res.json() : Promise.resolve([]);
+      return rows.then(function (r) { return { rows: r, total: total }; });
+    });
   }
   function addItem(item) {
     return request(TABLE, {
@@ -266,27 +306,57 @@
     }).then(function (data) { return data.review; });
   }
 
-  var items = [];
+  var items = [];   // 현재 페이지의 맛집
+  var total = 0;    // 전체 맛집 수(서버 기준)
   var loaded = false;
   var page = 1;
+  var loadToken = 0;
 
   var wideQuery = window.matchMedia("(min-width: 900px)");
   // PC는 카드 2열 x 4행, 모바일은 1열 x 6개.
   function pageSize() { return wideQuery.matches ? 8 : 6; }
 
-  // 1 … 4 5 6 … 10 형태로 보여 줄 번호 목록을 만든다.
-  function pageNumbers(total, current) {
+  // 현재 페이지를 서버에서 불러와 그린다. 오래된 응답은 버린다.
+  function load() {
+    var token = ++loadToken;
+    var size = pageSize();
+    $("list").classList.add("loading");
+    return loadPage(page, size).then(function (r) {
+      if (token !== loadToken) return;
+      var pages = Math.max(1, Math.ceil(r.total / size));
+      if (page > pages) { page = pages; return load(); } // 삭제로 비게 된 페이지는 앞 페이지로
+      items = r.rows;
+      total = r.total;
+      loaded = true;
+      render();
+    }).catch(function () {
+      if (token !== loadToken) return;
+      loaded = true;
+      render();
+      $("error").textContent = "목록을 불러오지 못했어요. 새로고침해 주세요.";
+    });
+  }
+
+  // 1 … 4 5 6 … 10 형태로 보여 줄 번호 목록을 만든다. 페이지가 아주 많아도 몇 개만 계산한다.
+  function pageNumbers(totalPages, current) {
+    var picked = {};
+    [1, current - 1, current, current + 1, totalPages].forEach(function (p) {
+      if (p >= 1 && p <= totalPages) picked[p] = true;
+    });
     var nums = [];
-    for (var p = 1; p <= total; p++) {
-      if (p === 1 || p === total || Math.abs(p - current) <= 1) nums.push(p);
-      else if (nums[nums.length - 1] !== "…") nums.push("…");
-    }
+    var prev = 0;
+    Object.keys(picked).map(Number).sort(function (a, b) { return a - b; }).forEach(function (p) {
+      if (p - prev === 2) nums.push(prev + 1);
+      else if (p - prev > 2) nums.push("…");
+      nums.push(p);
+      prev = p;
+    });
     return nums;
   }
 
   function goToPage(p) {
     page = p;
-    render();
+    load();
     var top = document.querySelector(".list-col").getBoundingClientRect().top;
     if (top < 0) document.querySelector(".list-col").scrollIntoView({ block: "start" });
   }
@@ -324,6 +394,8 @@
   function render() {
     var list = $("list");
     list.textContent = "";
+    list.classList.remove("loading");
+    $("total").textContent = loaded ? "총 " + total.toLocaleString("ko-KR") + "개" : "";
     if (!items.length) {
       var empty = document.createElement("p");
       empty.className = "empty";
@@ -332,11 +404,8 @@
       renderPager(0);
       return;
     }
-    var size = pageSize();
-    var totalPages = Math.ceil(items.length / size);
-    if (page > totalPages) page = totalPages;
-    if (page < 1) page = 1;
-    items.slice((page - 1) * size, page * size).forEach(function (it) {
+    var totalPages = Math.max(1, Math.ceil(total / pageSize()));
+    items.forEach(function (it) {
       var card = document.createElement("div");
       card.className = "card";
 
@@ -351,8 +420,7 @@
       del.addEventListener("click", function () {
         del.disabled = true;
         removeItem(it.id).then(function () {
-          items = items.filter(function (x) { return x.id !== it.id; });
-          render();
+          return load(); // 개수와 페이지를 서버 기준으로 다시 맞춘다.
         }).catch(function () {
           del.disabled = false;
           $("error").textContent = "삭제하지 못했어요. 잠시 후 다시 시도해 주세요.";
@@ -411,12 +479,11 @@
     var btn = e.target.querySelector("button.add");
     btn.disabled = true;
     addItem({ name: name, menu: menu, rating: rating, review: review })
-      .then(function (row) {
-        items.unshift(row);
+      .then(function () {
         page = 1; // 새 기록은 맨 위(1페이지)에 보인다.
-        render();
         $("form").reset();
         $("name").focus();
+        return load();
       })
       .catch(function () {
         err.textContent = "추가하지 못했어요. 잠시 후 다시 시도해 주세요.";
@@ -435,7 +502,7 @@
     var btn = $("ai");
     btn.disabled = true;
     btn.textContent = "추천 중...";
-    suggestReview({ name: name, menu: $("menu").value.trim(), rating: rating, model: $("model").value })
+    suggestReview({ name: name, menu: $("menu").value.trim(), rating: rating, model: selectedModel })
       .then(function (text) { $("review").value = text; })
       .catch(function () { err.textContent = "AI 추천을 받지 못했어요. 잠시 후 다시 시도해 주세요."; })
       .then(function () {
@@ -444,17 +511,21 @@
       });
   });
 
-  wideQuery.addEventListener("change", render);
-  render();
-  loadItems().then(function (rows) {
-    items = rows;
-    loaded = true;
-    render();
-  }).catch(function () {
-    loaded = true;
-    render();
-    $("error").textContent = "목록을 불러오지 못했어요. 새로고침해 주세요.";
+  // AI 모델 아이콘: 눌러서 선택하고, 선택된 것만 색이 켜진다. 빈 값은 자동.
+  var selectedModel = "";
+  $("models").addEventListener("click", function (e) {
+    var btn = e.target.closest(".model");
+    if (!btn) return;
+    selectedModel = btn.getAttribute("data-model");
+    Array.prototype.forEach.call($("models").querySelectorAll(".model"), function (m) {
+      m.setAttribute("aria-checked", m === btn ? "true" : "false");
+    });
   });
+
+  // 화면 크기가 바뀌어 한 페이지 개수가 달라지면 1페이지부터 다시 불러온다.
+  wideQuery.addEventListener("change", function () { page = 1; load(); });
+  render();
+  load();
 </script>
 </body>
 </html>
