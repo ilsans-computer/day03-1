@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>우리 동네 숨은 맛집</title>
+<style>
+  :root {
+    --orange: #f97316;
+    --orange-dark: #ea580c;
+    --orange-soft: #fff4e8;
+    --text: #2b2118;
+    --muted: #8a7b6e;
+    --line: #f0e2d3;
+    --bg: #fffaf5;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, "Segoe UI", "Malgun Gothic", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+  }
+  .wrap { max-width: 640px; margin: 0 auto; padding: 24px 16px 48px; }
+  h1 { margin: 0 0 4px; font-size: 1.6rem; color: var(--orange-dark); }
+  .sub { margin: 0 0 20px; color: var(--muted); font-size: .95rem; }
+  form, .card {
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 16px;
+    box-shadow: 0 2px 8px rgba(249, 115, 22, .06);
+  }
+  label { display: block; margin-bottom: 12px; font-size: .9rem; font-weight: 600; }
+  input, select, textarea {
+    width: 100%;
+    margin-top: 6px;
+    padding: 10px 12px;
+    font: inherit;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: #fff;
+  }
+  input:focus, select:focus, textarea:focus {
+    outline: 2px solid var(--orange);
+    border-color: var(--orange);
+  }
+  textarea { resize: vertical; min-height: 64px; }
+  .error { min-height: 1.2em; margin: 0 0 8px; color: #c2410c; font-size: .85rem; }
+  button.add {
+    width: 100%;
+    padding: 12px;
+    font: inherit;
+    font-weight: 700;
+    color: #fff;
+    background: var(--orange);
+    border: 0;
+    border-radius: 10px;
+    cursor: pointer;
+  }
+  button.add:hover { background: var(--orange-dark); }
+  h2 { margin: 28px 0 12px; font-size: 1.1rem; }
+  #list { display: grid; gap: 12px; }
+  .card .top { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+  .card h3 { margin: 0; font-size: 1.05rem; word-break: break-all; }
+  .menu { margin: 4px 0 0; color: var(--muted); font-size: .9rem; word-break: break-all; }
+  .stars { margin: 8px 0 0; color: var(--orange); letter-spacing: 2px; }
+  .review {
+    margin: 8px 0 0;
+    padding: 8px 10px;
+    background: var(--orange-soft);
+    border-radius: 8px;
+    font-size: .92rem;
+    word-break: break-all;
+  }
+  .del {
+    flex: none;
+    padding: 6px 10px;
+    font: inherit;
+    font-size: .8rem;
+    color: var(--muted);
+    background: none;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    cursor: pointer;
+  }
+  .del:hover { color: #c2410c; border-color: #c2410c; }
+  .empty { text-align: center; color: var(--muted); padding: 24px 0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>🍜 우리 동네 숨은 맛집</h1>
+  <p class="sub">가본 맛집을 기록해 두세요.</p>
+
+  <form id="form" novalidate>
+    <label>식당 이름 *
+      <input id="name" maxlength="30" placeholder="예: 골목 칼국수" autocomplete="off">
+    </label>
+    <label>메뉴
+      <input id="menu" maxlength="30" placeholder="예: 바지락 칼국수" autocomplete="off">
+    </label>
+    <label>별점 *
+      <select id="rating">
+        <option value="">선택하세요</option>
+        <option value="5">★★★★★ (5)</option>
+        <option value="4">★★★★☆ (4)</option>
+        <option value="3">★★★☆☆ (3)</option>
+        <option value="2">★★☆☆☆ (2)</option>
+        <option value="1">★☆☆☆☆ (1)</option>
+      </select>
+    </label>
+    <label>한줄평
+      <textarea id="review" maxlength="100" placeholder="100자 이내"></textarea>
+    </label>
+    <p class="error" id="error" role="alert"></p>
+    <button type="submit" class="add">추가</button>
+  </form>
+
+  <h2>등록된 맛집</h2>
+  <div id="list"></div>
+</div>
+
+<script>
+  var KEY = "restaurants";
+  var $ = function (id) { return document.getElementById(id); };
+
+  function load() {
+    try { return JSON.parse(localStorage.getItem(KEY)) || []; }
+    catch (e) { return []; }
+  }
+  function save(items) {
+    try { localStorage.setItem(KEY, JSON.stringify(items)); }
+    catch (e) { $("error").textContent = "저장하지 못했어요. 브라우저 저장 공간을 확인해 주세요."; }
+  }
+
+  var items = load();
+
+  function render() {
+    var list = $("list");
+    list.textContent = "";
+    if (!items.length) {
+      var empty = document.createElement("p");
+      empty.className = "empty";
+      empty.textContent = "아직 등록된 맛집이 없어요.";
+      list.appendChild(empty);
+      return;
+    }
+    items.forEach(function (it) {
+      var card = document.createElement("div");
+      card.className = "card";
+
+      var top = document.createElement("div");
+      top.className = "top";
+      var h = document.createElement("h3");
+      h.textContent = it.name;
+      var del = document.createElement("button");
+      del.className = "del";
+      del.type = "button";
+      del.textContent = "삭제";
+      del.addEventListener("click", function () {
+        items = items.filter(function (x) { return x.id !== it.id; });
+        save(items);
+        render();
+      });
+      top.appendChild(h);
+      top.appendChild(del);
+      card.appendChild(top);
+
+      if (it.menu) {
+        var m = document.createElement("p");
+        m.className = "menu";
+        m.textContent = it.menu;
+        card.appendChild(m);
+      }
+      var s = document.createElement("p");
+      s.className = "stars";
+      s.textContent = "★".repeat(it.rating) + "☆".repeat(5 - it.rating);
+      card.appendChild(s);
+
+      if (it.review) {
+        var r = document.createElement("p");
+        r.className = "review";
+        r.textContent = it.review;
+        card.appendChild(r);
+      }
+      list.appendChild(card);
+    });
+  }
+
+  $("form").addEventListener("submit", function (e) {
+    e.preventDefault();
+    var name = $("name").value.trim();
+    var menu = $("menu").value.trim();
+    var rating = Number($("rating").value);
+    var review = $("review").value.trim();
+    var err = $("error");
+
+    if (!name) { err.textContent = "식당 이름을 입력해 주세요."; return; }
+    if (name.length > 30) { err.textContent = "식당 이름은 30자 이하로 써 주세요."; return; }
+    if (menu.length > 30) { err.textContent = "메뉴는 30자 이하로 써 주세요."; return; }
+    if (!(rating >= 1 && rating <= 5)) { err.textContent = "별점을 선택해 주세요."; return; }
+    if (review.length > 100) { err.textContent = "한줄평은 100자 이하로 써 주세요."; return; }
+
+    err.textContent = "";
+    items.unshift({
+      id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+      name: name,
+      menu: menu,
+      rating: rating,
+      review: review,
+      created_at: new Date().toISOString()
+    });
+    save(items);
+    render();
+    $("form").reset();
+    $("name").focus();
+  });
+
+  render();
+</script>
+</body>
+</html>
