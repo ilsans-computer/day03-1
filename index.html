@@ -134,6 +134,18 @@
   @media (min-width: 641px) {
     h1 { font-size: 32px; line-height: 44px; }
   }
+  /* PC: 왼쪽 입력란 / 오른쪽 맛집 카드 목록 */
+  @media (min-width: 900px) {
+    .wrap { max-width: 1080px; padding: 48px 32px 60px; }
+    .layout {
+      display: grid;
+      grid-template-columns: 360px minmax(0, 1fr);
+      gap: 24px;
+      align-items: start;
+    }
+    form { position: sticky; top: 24px; }
+    .list-col h2 { margin-top: 0; }
+  }
   @media (max-width: 640px) {
     /* 모바일 입력 높이 50px */
     input, select { height: 50px; }
@@ -148,6 +160,7 @@
   <h1>우리 동네 숨은 맛집</h1>
   <p class="sub">가본 맛집을 기록하고 동네 사람들과 함께 봐요.</p>
 
+  <div class="layout">
   <form id="form" novalidate>
     <label>식당 이름 *
       <input id="name" maxlength="30" placeholder="예: 골목 칼국수" autocomplete="off">
@@ -181,8 +194,11 @@
     <button type="submit" class="add">추가</button>
   </form>
 
-  <h2>등록된 맛집</h2>
-  <div id="list"></div>
+  <section class="list-col">
+    <h2>등록된 맛집</h2>
+    <div id="list"></div>
+  </section>
+  </div>
   <p class="foot">시각 디자인은 Kyobo Design System의 시각 언어를 참고했어요.</p>
 </div>
 
