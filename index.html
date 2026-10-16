@@ -59,6 +59,19 @@
     cursor: pointer;
   }
   button.add:hover { background: var(--orange-dark); }
+  button.ai {
+    margin-top: 8px;
+    padding: 8px 12px;
+    font: inherit;
+    font-size: .85rem;
+    font-weight: 600;
+    color: var(--orange-dark);
+    background: var(--orange-soft);
+    border: 1px solid var(--orange);
+    border-radius: 10px;
+    cursor: pointer;
+  }
+  button.ai:disabled, button.add:disabled { opacity: .6; cursor: default; }
   h2 { margin: 28px 0 12px; font-size: 1.1rem; }
   #list { display: grid; gap: 12px; }
   .card .top { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
@@ -113,6 +126,7 @@
     <label>한줄평
       <textarea id="review" maxlength="100" placeholder="100자 이내"></textarea>
     </label>
+    <button type="button" class="ai" id="ai">✨ AI 한줄평 추천</button>
     <p class="error" id="error" role="alert"></p>
     <button type="submit" class="add">추가</button>
   </form>
@@ -153,6 +167,14 @@
   }
   function removeItem(id) {
     return request(TABLE + "?id=eq." + encodeURIComponent(id), { method: "DELETE", headers: HEADERS });
+  }
+
+  function suggestReview(item) {
+    return request(SUPABASE_URL + "/functions/v1/suggest-review", {
+      method: "POST",
+      headers: HEADERS,
+      body: JSON.stringify(item)
+    }).then(function (data) { return data.review; });
   }
 
   var items = [];
@@ -243,6 +265,26 @@
         err.textContent = "추가하지 못했어요. 잠시 후 다시 시도해 주세요.";
       })
       .then(function () { btn.disabled = false; });
+  });
+
+  $("ai").addEventListener("click", function () {
+    var name = $("name").value.trim();
+    var rating = Number($("rating").value);
+    var err = $("error");
+    if (!name) { err.textContent = "AI 추천을 받으려면 식당 이름을 먼저 입력해 주세요."; return; }
+    if (!(rating >= 1 && rating <= 5)) { err.textContent = "AI 추천을 받으려면 별점을 먼저 선택해 주세요."; return; }
+
+    err.textContent = "";
+    var btn = $("ai");
+    btn.disabled = true;
+    btn.textContent = "추천 중...";
+    suggestReview({ name: name, menu: $("menu").value.trim(), rating: rating })
+      .then(function (text) { $("review").value = text; })
+      .catch(function () { err.textContent = "AI 추천을 받지 못했어요. 잠시 후 다시 시도해 주세요."; })
+      .then(function () {
+        btn.disabled = false;
+        btn.textContent = "✨ AI 한줄평 추천";
+      });
   });
 
   render();
